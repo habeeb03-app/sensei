@@ -1,0 +1,11 @@
+{
+  "/api/progress/route": "app/api/progress/route.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js",
+  "/api/partner/route": "app/api/partner/route.js",
+  "/api/writing/route": "app/api/writing/route.js",
+  "/(app)/speaking/page": "app/(app)/speaking/page.js",
+  "/(app)/partner/page": "app/(app)/partner/page.js",
+  "/(app)/dashboard/page": "app/(app)/dashboard/page.js",
+  "/(app)/progress/page": "app/(app)/progress/page.js",
+  "/(app)/writing/page": "app/(app)/writing/page.js"
+}
