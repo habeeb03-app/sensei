@@ -7,7 +7,9 @@ import Progress from "@/models/Progress";
 import User from "@/models/User";
 
 export async function POST(req: NextRequest) {
+  console.log("=== Writing API ===");
   const session = await getServerSession(authOptions);
+  console.log("Session:", !!session, "UserId:", session?.user?.id);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

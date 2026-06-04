@@ -13,15 +13,30 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("=== Login attempt ===");
+        console.log("Email:", credentials?.email);
+        console.log("Password provided:", !!credentials?.password);
+
         if (!credentials?.email || !credentials?.password) {
+          console.log("Missing credentials");
           throw new Error("Email and password required");
         }
 
         await connectDB();
         const user = await User.findOne({ email: credentials.email });
-        if (!user) throw new Error("Invalid credentials");
+        console.log("User found:", !!user);
+
+        if (!user) {
+          console.log("No user found for email:", credentials.email);
+          throw new Error("Invalid credentials");
+        }
+
+        console.log("User document keys:", Object.keys(user.toObject()));
+        console.log("passwordHash exists:", !!user.passwordHash);
 
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        console.log("Password match:", isValid);
+
         if (!isValid) throw new Error("Invalid credentials");
 
         return {

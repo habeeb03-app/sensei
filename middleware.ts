@@ -4,7 +4,11 @@ export default withAuth({
   callbacks: {
     authorized({ req, token }) {
       const path = req.nextUrl.pathname;
-      if (path.startsWith("/login") || path.startsWith("/register") || path.startsWith("/api/auth") || path.startsWith("/api/register")) {
+      if (
+        path.startsWith("/login") ||
+        path.startsWith("/register") ||
+        path.startsWith("/api")
+      ) {
         return true;
       }
       return !!token;
@@ -14,6 +18,6 @@ export default withAuth({
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

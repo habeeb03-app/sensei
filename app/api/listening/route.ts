@@ -6,7 +6,10 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
 export async function GET() {
+  console.log("=== Listening API ===");
   const session = await getServerSession(authOptions);
+  console.log("Session:", !!session, "UserId:", session?.user?.id);
+  console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

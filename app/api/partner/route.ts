@@ -6,7 +6,10 @@ import { connectDB } from "@/lib/mongodb";
 import Conversation from "@/models/Conversation";
 
 export async function POST(req: NextRequest) {
+  console.log("=== Partner API ===");
   const session = await getServerSession(authOptions);
+  console.log("Session:", !!session, "UserId:", session?.user?.id);
+  console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
   }
