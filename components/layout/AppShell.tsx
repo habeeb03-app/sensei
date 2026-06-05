@@ -4,7 +4,6 @@ import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import ThemeToggle from "./ThemeToggle";
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "react-hot-toast";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -20,16 +19,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <BottomNav />
       </div>
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: "var(--toast-bg, #fff)",
-            color: "var(--toast-color, #1e293b)",
-          },
-        }}
-      />
     </SessionProvider>
   );
 }

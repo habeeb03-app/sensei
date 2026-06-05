@@ -1,11 +1,16 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connectDB } from "./mongodb";
 import User from "@/models/User";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -28,16 +33,20 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) {
           console.log("No user found for email:", credentials.email);
-          throw new Error("Invalid credentials");
+          throw new Error("Account does not exist");
         }
 
-        console.log("User document keys:", Object.keys(user.toObject()));
+        if (!user.passwordHash) {
+          console.log("User registered via Google, no password set");
+          throw new Error("This account uses Google sign-in. Please sign in with Google.");
+        }
+
         console.log("passwordHash exists:", !!user.passwordHash);
 
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
         console.log("Password match:", isValid);
 
-        if (!isValid) throw new Error("Invalid credentials");
+        if (!isValid) throw new Error("Invalid email or password");
 
         return {
           id: user._id.toString(),
@@ -63,6 +72,24 @@ export const authOptions: NextAuthOptions = {
         (session.user as { id: string }).id = token.id as string;
       }
       return session;
+    },
+    async signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        if (!profile?.email) return false;
+
+        await connectDB();
+        const existingUser = await User.findOne({ email: profile.email });
+
+        if (!existingUser) {
+          await User.create({
+            name: profile.name || profile.email.split("@")[0],
+            email: profile.email,
+          });
+        }
+
+        return true;
+      }
+      return true;
     },
   },
   pages: {
