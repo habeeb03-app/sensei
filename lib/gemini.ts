@@ -9,6 +9,13 @@ export const genAI = new GoogleGenerativeAI(apiKey || "");
 
 export const MODEL = "gemini-2.5-flash";
 
+function cleanJsonResponse(text: string): string {
+  const trimmed = text.trim();
+  const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (match) return match[1].trim();
+  return trimmed;
+}
+
 export interface StreamChatParams {
   messages: { role: "user" | "assistant" | "system"; content: string }[];
   mode?: "free" | "scenario" | "interview";
@@ -65,7 +72,7 @@ export async function generateCorrection(text: string) {
   );
 
   const result = await model.generateContent(text);
-  const responseText = result.response.text();
+  const responseText = cleanJsonResponse(result.response.text());
   return JSON.parse(responseText);
 }
 
@@ -75,7 +82,7 @@ export async function evaluateSpeaking(transcript: string) {
   );
 
   const result = await model.generateContent(transcript);
-  const responseText = result.response.text();
+  const responseText = cleanJsonResponse(result.response.text());
   return JSON.parse(responseText);
 }
 
@@ -85,7 +92,7 @@ export async function generateVocabulary(level: string) {
   );
 
   const result = await model.generateContent(`Generate vocabulary for ${level} level.`);
-  const responseText = result.response.text();
+  const responseText = cleanJsonResponse(result.response.text());
   return JSON.parse(responseText);
 }
 
@@ -95,6 +102,6 @@ export async function generateListeningContent(level: string) {
   );
 
   const result = await model.generateContent(`Generate listening content for ${level} level.`);
-  const responseText = result.response.text();
+  const responseText = cleanJsonResponse(result.response.text());
   return JSON.parse(responseText);
 }

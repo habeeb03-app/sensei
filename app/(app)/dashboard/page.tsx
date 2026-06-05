@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import StreakCard from "@/components/dashboard/StreakCard";
@@ -18,29 +18,42 @@ interface DashboardData {
     xp: number;
     streak: number;
   };
+  todayActivities: number;
 }
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [data, setData] = useState<DashboardData | null>(null);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/progress")
-        .then((res) => res.json())
-        .then((json) => {
-          const level = getLevel(json.user.xp);
-          setData({
-            user: {
-              ...json.user,
-              level,
-              levelProgress: getLevelProgress(json.user.xp),
-            },
-          });
-        })
-        .catch(() => {});
-    }
+  const fetchData = useCallback(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/progress")
+      .then((res) => res.json())
+      .then((json) => {
+        const level = getLevel(json.user.xp);
+        const today = new Date().toISOString().split("T")[0];
+        const todayRecord = (json.progress || []).find((p: { date: string }) => p.date === today);
+        setData({
+          user: {
+            ...json.user,
+            level,
+            levelProgress: getLevelProgress(json.user.xp),
+          },
+          todayActivities: todayRecord ? (todayRecord.activitiesCompleted || []).length : 0,
+        });
+      })
+      .catch(() => {});
   }, [status]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const onFocus = () => fetchData();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchData]);
 
   if (status === "loading") {
     return (
@@ -74,8 +87,8 @@ export default function DashboardPage() {
                 levelProgress={data.user.levelProgress}
               />
             </Card>
-            <Card className="flex items-center justify-center col-span-2 sm:col-span-2 relative">
-              <DailyGoalRing current={0} goal={5} />
+            <Card className="flex items-center justify-center col-span-2 sm:col-span-2">
+              <DailyGoalRing current={data?.todayActivities || 0} goal={5} />
             </Card>
           </div>
         </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import Card from "@/components/ui/card";
@@ -34,15 +34,24 @@ export default function ProgressPage() {
   const [data, setData] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/progress")
-        .then((r) => r.json())
-        .then((d) => setData(d))
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
+  const fetchProgress = useCallback(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/progress")
+      .then((r) => r.json())
+      .then((d) => setData(d))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [status]);
+
+  useEffect(() => {
+    fetchProgress();
+  }, [fetchProgress]);
+
+  useEffect(() => {
+    const onFocus = () => fetchProgress();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchProgress]);
 
   if (status === "loading" || loading) {
     return (

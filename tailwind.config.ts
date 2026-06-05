@@ -29,6 +29,7 @@ const config: Config = {
         "bounce-slow": "bounce 2s infinite",
         "fade-in": "fadeIn 0.5s ease-out",
         "slide-up": "slideUp 0.3s ease-out",
+        "slide-in-left": "slideInLeft 0.3s ease-out",
         "flip": "flip 0.6s ease-in-out",
       },
       keyframes: {
@@ -43,6 +44,10 @@ const config: Config = {
         flip: {
           "0%": { transform: "rotateY(0deg)" },
           "100%": { transform: "rotateY(180deg)" },
+        },
+        slideInLeft: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(0)" },
         },
       },
     },

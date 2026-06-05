@@ -8,7 +8,7 @@ import Card from "@/components/ui/card";
 import Button from "@/components/ui/button";
 import toast from "react-hot-toast";
 
-const DAILY_PROMPTS = [
+const ALL_PROMPTS = [
   "Describe your favorite place in the world and explain why it's special to you.",
   "What is the most important lesson life has taught you?",
   "If you could travel anywhere tomorrow, where would you go and what would you do?",
@@ -19,12 +19,17 @@ const DAILY_PROMPTS = [
   "Describe a time you helped someone and how it made you feel.",
   "What is your favorite way to spend a weekend?",
   "If you could learn any skill instantly, what would it be and why?",
+  "Describe a challenge you overcame and what you learned from it.",
+  "What is the best advice you've ever received?",
+  "Write about a tradition that is important to your family.",
+  "What does your ideal day look like?",
+  "Describe a book or movie that changed your perspective.",
 ];
 
 export default function WritingPage() {
   const { data: session, status } = useSession();
   const [text, setText] = useState("");
-  const [prompt] = useState(() => DAILY_PROMPTS[new Date().getDay() % DAILY_PROMPTS.length]);
+  const [prompt, setPrompt] = useState(() => ALL_PROMPTS[Math.floor(Math.random() * ALL_PROMPTS.length)]);
   const [loading, setLoading] = useState(false);
   const [correction, setCorrection] = useState<{
     corrected: string;
@@ -60,7 +65,7 @@ export default function WritingPage() {
       setCorrection(data);
       toast.success("Writing corrected!");
     } catch {
-      toast.error("Failed to get correction. Check your API key.");
+      toast.error("Failed to get correction. Please try again.");
     } finally {
       setLoading(false);
     }

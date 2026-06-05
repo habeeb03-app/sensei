@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { createPartnerStream } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import Conversation from "@/models/Conversation";
+import Progress from "@/models/Progress";
+import User from "@/models/User";
+import { getToday, getYesterday } from "@/lib/utils";
 
 function checkEnv(name: string): string {
   const value = process.env[name];
@@ -104,6 +107,35 @@ export async function POST(req: NextRequest) {
             timestamp: new Date(),
           });
           await conversation.save();
+
+          try {
+            const today = getToday();
+            await Progress.findOneAndUpdate(
+              { userId: session.user.id, date: today },
+              {
+                $inc: { xpEarned: 5 },
+                $addToSet: { activitiesCompleted: "partner_chat" },
+              },
+              { upsert: true }
+            );
+
+            const userDoc = await User.findById(session.user.id);
+            if (userDoc) {
+              const lastActive = userDoc.lastActiveDate
+                ? new Date(userDoc.lastActiveDate).toISOString().split("T")[0]
+                : null;
+              const newStreak = lastActive === today ? userDoc.streak
+                : lastActive === getYesterday() ? userDoc.streak + 1
+                : 1;
+
+              await User.findByIdAndUpdate(session.user.id, {
+                $inc: { xp: 5 },
+                $set: { lastActiveDate: new Date(), streak: newStreak },
+              });
+            }
+          } catch (e) {
+            console.error("[partner] Progress update error:", e);
+          }
 
           controller.close();
         } catch (error) {

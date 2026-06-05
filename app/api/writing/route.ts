@@ -5,6 +5,7 @@ import { generateCorrection } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import Progress from "@/models/Progress";
 import User from "@/models/User";
+import { getToday, getYesterday } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   console.log("=== Writing API ===");
@@ -12,6 +13,11 @@ export async function POST(req: NextRequest) {
   console.log("Session:", !!session, "UserId:", session?.user?.id);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[writing] Aborting — GEMINI_API_KEY is not set");
+    return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
   }
 
   try {
@@ -23,20 +29,31 @@ export async function POST(req: NextRequest) {
     const correction = await generateCorrection(text);
 
     await connectDB();
-    const today = new Date().toISOString().split("T")[0];
+    const today = getToday();
 
     await Progress.findOneAndUpdate(
       { userId: session.user.id, date: today },
       {
         $inc: { writingScore: 1, xpEarned: 15 },
-        $push: { activitiesCompleted: "writing" },
+        $addToSet: { activitiesCompleted: "writing" },
       },
       { upsert: true }
     );
 
-    await User.findByIdAndUpdate(session.user.id, {
-      $inc: { xp: 15 },
-    });
+    const user = await User.findById(session.user.id);
+    if (user) {
+      const lastActive = user.lastActiveDate
+        ? new Date(user.lastActiveDate).toISOString().split("T")[0]
+        : null;
+      const newStreak = lastActive === today ? user.streak
+        : lastActive === getYesterday() ? user.streak + 1
+        : 1;
+
+      await User.findByIdAndUpdate(session.user.id, {
+        $inc: { xp: 15 },
+        $set: { lastActiveDate: new Date(), streak: newStreak },
+      });
+    }
 
     return NextResponse.json(correction);
   } catch (error) {

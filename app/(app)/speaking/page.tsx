@@ -49,7 +49,7 @@ export default function SpeakingPage() {
       setHistory((prev) => [{ transcript: text, score: data.score }, ...prev]);
       toast.success("Speaking evaluated!");
     } catch {
-      toast.error("Failed to evaluate. Check your API key.");
+      toast.error("Failed to evaluate speech. Please try again.");
     } finally {
       setLoading(false);
     }

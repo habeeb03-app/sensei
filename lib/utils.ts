@@ -39,6 +39,25 @@ export function formatDate(date: Date | string) {
   });
 }
 
+export function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function getYesterday(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split("T")[0];
+}
+
+export function getToday(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 export function getStreakEmoji(streak: number) {
   if (streak >= 30) return "🔥🔥🔥";
   if (streak >= 7) return "🔥🔥";

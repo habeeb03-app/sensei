@@ -6,8 +6,8 @@ import Card from "@/components/ui/card";
 const quickLinks = [
   { href: "/partner", label: "💬 Partner Chat", desc: "Practice conversation with AI" },
   { href: "/speaking", label: "🎤 Speaking", desc: "Improve your pronunciation" },
+  { href: "/listening", label: "🎧 Listening", desc: "Comprehension practice" },
   { href: "/writing", label: "✍️ Writing", desc: "Get grammar corrections" },
-  { href: "/vocabulary", label: "📚 Vocabulary", desc: "Learn new words daily" },
 ];
 
 export default function QuickStartCards() {

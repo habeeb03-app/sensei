@@ -8,6 +8,7 @@ import QuestionCard from "@/components/listening/QuestionCard";
 import Button from "@/components/ui/button";
 import Card from "@/components/ui/card";
 import Badge from "@/components/ui/badge";
+import { shuffleArray } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface Question {
@@ -51,7 +52,12 @@ export default function ListeningPage() {
       if (!res.ok) throw new Error("Failed to load");
 
       const data = await res.json();
-      const qs = data.questions || [];
+      const qs = (data.questions || []).map((q: Question) => {
+        const correctAnswer = q.options[q.correctIndex];
+        const shuffled = shuffleArray(q.options);
+        const newCorrectIndex = shuffled.indexOf(correctAnswer);
+        return { ...q, options: shuffled, correctIndex: newCorrectIndex };
+      });
       setPassage(data.passage || "Practice passage not available.");
       setQuestions(Array.isArray(qs) ? qs : []);
     } catch {

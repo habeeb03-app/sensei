@@ -5,6 +5,7 @@ import { generateVocabulary } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Progress from "@/models/Progress";
+import { getToday, getYesterday } from "@/lib/utils";
 
 export async function GET() {
   console.log("=== Vocabulary GET API ===");
@@ -12,6 +13,11 @@ export async function GET() {
   console.log("Session:", !!session, "UserId:", session?.user?.id);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[vocabulary] Aborting — GEMINI_API_KEY is not set");
+    return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
   }
 
   try {
@@ -22,11 +28,29 @@ export async function GET() {
     }
 
     const words = await generateVocabulary(user.level);
-    return NextResponse.json(words);
+    return NextResponse.json({ words });
   } catch (error) {
     console.error("[vocabulary] Error:", error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
+}
+
+async function updateUserActivity(userId: string, xpAmount: number) {
+  const today = getToday();
+  const user = await User.findById(userId);
+  if (!user) return;
+
+  const lastActive = user.lastActiveDate
+    ? new Date(user.lastActiveDate).toISOString().split("T")[0]
+    : null;
+  const newStreak = lastActive === today ? user.streak
+    : lastActive === getYesterday() ? user.streak + 1
+    : 1;
+
+  await User.findByIdAndUpdate(userId, {
+    $inc: { xp: xpAmount },
+    $set: { lastActiveDate: new Date(), streak: newStreak },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -41,20 +65,18 @@ export async function POST(req: NextRequest) {
     const { quizScore } = await req.json();
 
     await connectDB();
-    const today = new Date().toISOString().split("T")[0];
+    const today = getToday();
 
     await Progress.findOneAndUpdate(
       { userId: session.user.id, date: today },
       {
         $inc: { vocabularyLearned: 1, xpEarned: 25 },
-        $push: { activitiesCompleted: "vocabulary_quiz" },
+        $addToSet: { activitiesCompleted: "vocabulary_quiz" },
       },
       { upsert: true }
     );
 
-    await User.findByIdAndUpdate(session.user.id, {
-      $inc: { xp: 25 },
-    });
+    await updateUserActivity(session.user.id, 25);
 
     return NextResponse.json({ success: true, xpEarned: 25 });
   } catch (error) {

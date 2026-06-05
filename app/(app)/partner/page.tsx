@@ -106,7 +106,7 @@ export default function PartnerPage() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== "AbortError") {
-        toast.error("Failed to get response. Check your API key.");
+        toast.error("Failed to get response. Please try again.");
         setMessages((prev) => [
           ...prev,
           {

@@ -55,7 +55,7 @@ export default function VocabularyPage() {
       const wordList = data.words || data.vocabulary || data.data || [];
       setWords(Array.isArray(wordList) ? wordList : []);
     } catch {
-      toast.error("Failed to load vocabulary. Check your API key.");
+      toast.error("Failed to load vocabulary. Please try again.");
     } finally {
       setLoading(false);
     }
