@@ -11,8 +11,18 @@ export const MODEL = "gemini-2.5-flash";
 
 function cleanJsonResponse(text: string): string {
   const trimmed = text.trim();
-  const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (match) return match[1].trim();
+  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) return fenceMatch[1].trim();
+  const firstBrace = trimmed.indexOf("{");
+  const firstBracket = trimmed.indexOf("[");
+  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+    const lastBrace = trimmed.lastIndexOf("}");
+    if (lastBrace > firstBrace) return trimmed.slice(firstBrace, lastBrace + 1);
+  }
+  if (firstBracket !== -1) {
+    const lastBracket = trimmed.lastIndexOf("]");
+    if (lastBracket > firstBracket) return trimmed.slice(firstBracket, lastBracket + 1);
+  }
   return trimmed;
 }
 

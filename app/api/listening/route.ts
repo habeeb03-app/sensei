@@ -5,7 +5,7 @@ import { generateListeningContent } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Progress from "@/models/Progress";
-import { getToday, getYesterday } from "@/lib/utils";
+import { getToday, getYesterday, getLevel } from "@/lib/utils";
 
 export async function GET() {
   console.log("=== Listening API ===");
@@ -23,7 +23,7 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const content = await generateListeningContent(user.level);
+    const content = await generateListeningContent(getLevel(user.xp));
 
     // Track listening activity (award XP for completion)
     const today = getToday();

@@ -5,7 +5,7 @@ import { generateVocabulary } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Progress from "@/models/Progress";
-import { getToday, getYesterday } from "@/lib/utils";
+import { getToday, getYesterday, getLevel } from "@/lib/utils";
 
 export async function GET() {
   console.log("=== Vocabulary GET API ===");
@@ -27,7 +27,7 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const words = await generateVocabulary(user.level);
+    const words = await generateVocabulary(getLevel(user.xp));
     return NextResponse.json({ words });
   } catch (error) {
     console.error("[vocabulary] Error:", error);
