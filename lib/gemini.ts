@@ -1,14 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const MODEL = "gemini-2.5-flash";
-
-function getGenAI(): GoogleGenerativeAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured on the server");
-  }
-  return new GoogleGenerativeAI(apiKey);
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.error("[gemini] MISSING ENV VAR: GEMINI_API_KEY — all AI features will fail");
 }
+
+export const genAI = new GoogleGenerativeAI(apiKey || "");
+
+export const MODEL = "gemini-2.5-flash";
 
 export interface StreamChatParams {
   messages: { role: "user" | "assistant" | "system"; content: string }[];
@@ -28,22 +27,10 @@ export function buildPartnerSystemPrompt(mode: string, scenario?: string): strin
   return base + (modeInstructions[mode] || modeInstructions.free);
 }
 
-function getModel(systemInstruction?: string) {
-  const genAI = getGenAI();
-  return genAI.getGenerativeModel({
-    model: MODEL,
-    ...(systemInstruction ? { systemInstruction } : {}),
-  });
-}
-
 function getJsonModel(systemInstruction: string) {
-  const genAI = getGenAI();
   return genAI.getGenerativeModel({
     model: MODEL,
     systemInstruction,
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
   });
 }
 
@@ -58,7 +45,6 @@ function toGeminiContents(messages: { role: string; content: string }[]) {
 
 export async function createPartnerStream(params: StreamChatParams) {
   const systemPrompt = buildPartnerSystemPrompt(params.mode || "free", params.scenario);
-  const genAI = getGenAI();
 
   const model = genAI.getGenerativeModel({
     model: MODEL,

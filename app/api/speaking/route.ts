@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       improved: evaluation.improved,
     });
   } catch (error) {
-    console.error("Speaking API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[speaking] Error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

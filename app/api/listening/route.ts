@@ -23,7 +23,8 @@ export async function GET() {
 
     const content = await generateListeningContent(user.level);
     return NextResponse.json(content);
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    console.error("[listening] Error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

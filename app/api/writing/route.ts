@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(correction);
   } catch (error) {
-    console.error("Writing API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[writing] Error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

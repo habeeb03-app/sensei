@@ -24,8 +24,8 @@ export async function GET() {
     const words = await generateVocabulary(user.level);
     return NextResponse.json(words);
   } catch (error) {
-    console.error("Vocabulary API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[vocabulary] Error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, xpEarned: 25 });
   } catch (error) {
-    console.error("Vocabulary quiz API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[vocabulary] POST Error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
