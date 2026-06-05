@@ -93,9 +93,9 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        if (user.email) {
+        if (account?.provider === "google") {
           await connectDB();
           const dbUser = await User.findOne({ email: user.email });
           if (dbUser) {
