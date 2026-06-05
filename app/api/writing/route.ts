@@ -5,7 +5,8 @@ import { generateCorrection } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import Progress from "@/models/Progress";
 import User from "@/models/User";
-import { getToday, getYesterday } from "@/lib/utils";
+import { getToday } from "@/lib/utils";
+import { updateUserActivity } from "@/lib/user";
 
 export async function POST(req: NextRequest) {
   console.log("=== Writing API ===");
@@ -40,20 +41,7 @@ export async function POST(req: NextRequest) {
       { upsert: true }
     );
 
-    const user = await User.findById(session.user.id);
-    if (user) {
-      const lastActive = user.lastActiveDate
-        ? new Date(user.lastActiveDate).toISOString().split("T")[0]
-        : null;
-      const newStreak = lastActive === today ? user.streak
-        : lastActive === getYesterday() ? user.streak + 1
-        : 1;
-
-      await User.findByIdAndUpdate(session.user.id, {
-        $inc: { xp: 15 },
-        $set: { lastActiveDate: new Date(), streak: newStreak },
-      });
-    }
+    await updateUserActivity(session.user.id, 15);
 
     return NextResponse.json(correction);
   } catch (error) {

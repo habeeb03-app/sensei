@@ -5,7 +5,8 @@ import { generateVocabulary } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Progress from "@/models/Progress";
-import { getToday, getYesterday, getLevel } from "@/lib/utils";
+import { getToday, getLevel } from "@/lib/utils";
+import { updateUserActivity } from "@/lib/user";
 
 export async function GET() {
   console.log("=== Vocabulary GET API ===");
@@ -35,23 +36,6 @@ export async function GET() {
   }
 }
 
-async function updateUserActivity(userId: string, xpAmount: number) {
-  const today = getToday();
-  const user = await User.findById(userId);
-  if (!user) return;
-
-  const lastActive = user.lastActiveDate
-    ? new Date(user.lastActiveDate).toISOString().split("T")[0]
-    : null;
-  const newStreak = lastActive === today ? user.streak
-    : lastActive === getYesterday() ? user.streak + 1
-    : 1;
-
-  await User.findByIdAndUpdate(userId, {
-    $inc: { xp: xpAmount },
-    $set: { lastActiveDate: new Date(), streak: newStreak },
-  });
-}
 
 export async function POST(req: NextRequest) {
   console.log("=== Vocabulary POST API ===");
@@ -70,7 +54,7 @@ export async function POST(req: NextRequest) {
     await Progress.findOneAndUpdate(
       { userId: session.user.id, date: today },
       {
-        $inc: { vocabularyLearned: 1, xpEarned: 25 },
+        $inc: { vocabularyLearned: quizScore || 0, xpEarned: 25 },
         $addToSet: { activitiesCompleted: "vocabulary_quiz" },
       },
       { upsert: true }

@@ -5,7 +5,8 @@ import { evaluateSpeaking } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import Progress from "@/models/Progress";
 import User from "@/models/User";
-import { getToday, getYesterday } from "@/lib/utils";
+import { getToday } from "@/lib/utils";
+import { updateUserActivity } from "@/lib/user";
 
 export async function POST(req: NextRequest) {
   console.log("=== Speaking API ===");
@@ -35,26 +36,14 @@ export async function POST(req: NextRequest) {
     await Progress.findOneAndUpdate(
       { userId: session.user.id, date: today },
       {
-        $inc: { speakingScore: score, xpEarned: 20 },
+        $max: { speakingScore: score },
+        $inc: { xpEarned: 20 },
         $addToSet: { activitiesCompleted: "speaking" },
       },
       { upsert: true }
     );
 
-    const user = await User.findById(session.user.id);
-    if (user) {
-      const lastActive = user.lastActiveDate
-        ? new Date(user.lastActiveDate).toISOString().split("T")[0]
-        : null;
-      const newStreak = lastActive === today ? user.streak
-        : lastActive === getYesterday() ? user.streak + 1
-        : 1;
-
-      await User.findByIdAndUpdate(session.user.id, {
-        $inc: { xp: 20 },
-        $set: { lastActiveDate: new Date(), streak: newStreak },
-      });
-    }
+    await updateUserActivity(session.user.id, 20);
 
     return NextResponse.json({
       score,

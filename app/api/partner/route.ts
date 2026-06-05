@@ -6,7 +6,8 @@ import { connectDB } from "@/lib/mongodb";
 import Conversation from "@/models/Conversation";
 import Progress from "@/models/Progress";
 import User from "@/models/User";
-import { getToday, getYesterday } from "@/lib/utils";
+import { getToday } from "@/lib/utils";
+import { updateUserActivity } from "@/lib/user";
 
 function checkEnv(name: string): string {
   const value = process.env[name];
@@ -119,20 +120,7 @@ export async function POST(req: NextRequest) {
               { upsert: true }
             );
 
-            const userDoc = await User.findById(session.user.id);
-            if (userDoc) {
-              const lastActive = userDoc.lastActiveDate
-                ? new Date(userDoc.lastActiveDate).toISOString().split("T")[0]
-                : null;
-              const newStreak = lastActive === today ? userDoc.streak
-                : lastActive === getYesterday() ? userDoc.streak + 1
-                : 1;
-
-              await User.findByIdAndUpdate(session.user.id, {
-                $inc: { xp: 5 },
-                $set: { lastActiveDate: new Date(), streak: newStreak },
-              });
-            }
+            await updateUserActivity(session.user.id, 5);
           } catch (e) {
             console.error("[partner] Progress update error:", e);
           }

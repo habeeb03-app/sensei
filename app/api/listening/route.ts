@@ -5,7 +5,8 @@ import { generateListeningContent } from "@/lib/gemini";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Progress from "@/models/Progress";
-import { getToday, getYesterday, getLevel } from "@/lib/utils";
+import { getToday, getLevel } from "@/lib/utils";
+import { updateUserActivity } from "@/lib/user";
 
 export async function GET() {
   console.log("=== Listening API ===");
@@ -36,17 +37,7 @@ export async function GET() {
       { upsert: true }
     );
 
-    const lastActive = user.lastActiveDate
-      ? new Date(user.lastActiveDate).toISOString().split("T")[0]
-      : null;
-    const newStreak = lastActive === today ? user.streak
-      : lastActive === getYesterday() ? user.streak + 1
-      : 1;
-
-    await User.findByIdAndUpdate(session.user.id, {
-      $inc: { xp: 10 },
-      $set: { lastActiveDate: new Date(), streak: newStreak },
-    });
+    await updateUserActivity(session.user.id, 10);
 
     return NextResponse.json(content);
   } catch (error) {
