@@ -5,11 +5,43 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "./mongodb";
 import User from "@/models/User";
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`[auth] MISSING REQUIRED ENV VAR: ${name}`);
+    console.error(
+      `[auth] Add ${name} to your Vercel environment variables and .env.local`
+    );
+    return "";
+  }
+  return value;
+}
+
+const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
+const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
+const NEXTAUTH_SECRET = requireEnv("NEXTAUTH_SECRET");
+const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "";
+
+console.log("[auth] Initializing authOptions...");
+console.log(`[auth] NEXTAUTH_URL: ${NEXTAUTH_URL || "(not set — NextAuth will auto-detect)"}`);
+console.log(`[auth] GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? `${GOOGLE_CLIENT_ID.substring(0, 10)}...` : "MISSING"}`);
+console.log(`[auth] GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? "set (hidden)" : "MISSING"}`);
+console.log(`[auth] NEXTAUTH_SECRET: ${NEXTAUTH_SECRET ? "set (hidden)" : "MISSING"}`);
+
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+  console.warn("[auth] Google OAuth will NOT work — missing credentials");
+} else {
+  const callbackUrl = `${NEXTAUTH_URL || "https://englishsensei.vercel.app"}/api/auth/callback/google`;
+  console.log(`[auth] Google OAuth callback URL: ${callbackUrl}`);
+  console.log(`[auth] Ensure this exact URL is registered in Google Cloud Console`);
+  console.log(`[auth] Also add "${NEXTAUTH_URL || "https://englishsensei.vercel.app"}" to Authorized JavaScript origins`);
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -74,17 +106,24 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ account, profile }) {
+      console.log(`[auth] signIn callback triggered — provider: ${account?.provider}`);
       if (account?.provider === "google") {
-        if (!profile?.email) return false;
+        console.log(`[auth] Google signIn — profile email: ${profile?.email}`);
+        if (!profile?.email) {
+          console.error("[auth] Google signIn failed — no email in profile");
+          return false;
+        }
 
         await connectDB();
         const existingUser = await User.findOne({ email: profile.email });
+        console.log(`[auth] Google user "${profile.email}" exists: ${!!existingUser}`);
 
         if (!existingUser) {
           await User.create({
             name: profile.name || profile.email.split("@")[0],
             email: profile.email,
           });
+          console.log(`[auth] Created new user for: ${profile.email}`);
         }
 
         return true;
@@ -95,5 +134,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
 };
